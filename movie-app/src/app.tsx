@@ -31,12 +31,13 @@ type MovieJson = {
 export function App() {
   const [keyword, setKeyword] = useState("");
   const [movieList, setMovieList] = useState<Movie[]>([]);
+  const [heroMovie, setHeroMovie] = useState<Movie | null>(null);
 
   let url = "";
   if (keyword) {
-    url = `https://api.themoviedb.org/3/search/movie?query=${keyword}&include_adult=false&language=ja-US&page=1`;
+    url = `https://api.themoviedb.org/3/search/movie?query=${keyword}&include_adult=false&language=ja&page=1`;
   } else {
-    url = "https://api.themoviedb.org/3/movie/popular?language=en-ja&page=1";
+    url = "https://api.themoviedb.org/3/movie/popular?language=ja&page=1";
   }
 
   const fetchMovieList = async () => {
@@ -63,28 +64,30 @@ export function App() {
     fetchMovieList();
     // 依存配列
   }, [keyword]);
-  const heroMovie = movieList[0];
-  const heroTitle = heroMovie?.original_title;
-  const heroYear = heroMovie?.release_date;
 
-  const heroOverview =
-    "1,000年に1度のすい星来訪が、1か月後に迫る日本。山々に囲まれた田舎町に住む女子高生の三葉は、町長である父の選挙運動や、家系の神社の風習などに鬱屈（うっくつ）していた。それゆえに都会への憧れを強く持っていたが、ある日彼女は自分が都会に暮らしている少年になった夢を見る。夢では東京での生活を楽しみながらも、その不思議な感覚に困惑する三葉。一方、東京在住の男子高校生・瀧も自分が田舎町に生活する少女になった夢を見る。やがて、その奇妙な夢を通じて彼らは引き合うようになっていくが……。";
-  const heroImage =
-    "https://media.themoviedb.org/t/p/w300_and_h450_bestv2/yLglTwyFOUZt5fNKm0PWL1PK5gm.jpg";
+  useEffect(() => {
+    if (movieList.length === 0) {
+      setHeroMovie(null);
+      return;
+    }
+    const randomIndex = Math.floor(Math.random() * movieList.length);
+    setHeroMovie(movieList[randomIndex]);
+  }, [movieList]);
+  const heroTitle = heroMovie?.original_title;
+  const heroYear = heroMovie?.release_date?.split("-")[0];
+
+  const heroOverview = heroMovie?.overview;
+  const heroImage = heroMovie?.poster_path
+    ? `https://image.tmdb.org/t/p/w780${heroMovie.poster_path}`
+    : "";
 
   return (
     <>
       <div>
         <section className="hero-section">
+          <h2 className="hero-section-title">あなたへのおすすめ</h2>
           {heroImage && (
-            <>
-              <img
-                className="hero-section-bg"
-                src={heroImage}
-                alt={heroTitle}
-              />
-              <div className="hero-section-gradient" />
-            </>
+            <img className="hero-section-img" src={heroImage} alt={heroTitle} />
           )}
           <div className="hero-section-content">
             <h1 className="hero-section-title">{heroTitle}</h1>
@@ -106,7 +109,7 @@ export function App() {
         </div>
         <section className="movie-row-section">
           <h2 className="movie-row-title">
-            {keyword ? `「${keyword}」の検索結果` : "人気映画"}
+            {keyword ? `「${keyword}」の検索結果` : "トップ20"}
           </h2>
           <div className="movie-row-scroll">
             {movieList.map((movie) => (
